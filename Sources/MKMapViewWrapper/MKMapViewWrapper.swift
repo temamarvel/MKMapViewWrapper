@@ -8,7 +8,7 @@ import SwiftUI
 import MapKit
 
 //swiftui враппер для uikit mkmapview
-struct MKMapViewWrapper : UIViewRepresentable{
+public struct MKMapViewWrapper : UIViewRepresentable{
     //хранит ссылку на region
     //враппер @Binding может читать и менять region
     //но при этом не отслеживает его изменения (т.е. не пошлет нотификации ни в сабвью ни в супервью)
@@ -24,22 +24,22 @@ struct MKMapViewWrapper : UIViewRepresentable{
     var annotations: [MKAnnotation]? = nil
     
     //actions
-    private var onAnnotationDidSelectAction: ((MKAnnotation?) -> Void)? = nil
-    private var onAnnotationDidDeselectAction: ((MKAnnotation?) -> Void)? = nil
+    internal var onAnnotationDidSelectAction: ((MKAnnotation?) -> Void)? = nil
+    internal var onAnnotationDidDeselectAction: ((MKAnnotation?) -> Void)? = nil
     
-    init<Items, Annotation>(region: Binding<MKCoordinateRegion>, showsUserLocation: Bool = true, showsScale: Bool = false, pointOfInterestFilter: Binding<MKPointOfInterestFilter> = .constant(.excludingAll), annotationsDataItems: Items, annotationContent: @escaping (Items.Element) -> Annotation) where Items: RandomAccessCollection, Items.Element: Identifiable, Annotation: MKAnnotation {
+    public init<Items, Annotation>(region: Binding<MKCoordinateRegion>, showsUserLocation: Bool = true, showsScale: Bool = false, pointOfInterestFilter: Binding<MKPointOfInterestFilter> = .constant(.excludingAll), annotationsDataItems: Items, annotationContent: @escaping (Items.Element) -> Annotation) where Items: RandomAccessCollection, Items.Element: Identifiable, Annotation: MKAnnotation {
         self.init(region: region, showsUserLocation: showsUserLocation, showsScale: showsScale)
         self.annotations = annotationsDataItems.map(annotationContent)
     }
     
-    init(region: Binding<MKCoordinateRegion>, showsUserLocation: Bool = true, showsScale: Bool = false, pointOfInterestFilter: Binding<MKPointOfInterestFilter> = .constant(.excludingAll)) {
+    public init(region: Binding<MKCoordinateRegion>, showsUserLocation: Bool = true, showsScale: Bool = false, pointOfInterestFilter: Binding<MKPointOfInterestFilter> = .constant(.excludingAll)) {
         self._region = region
         self._pointOfInterestFilter = pointOfInterestFilter
         self.showsUserLocation = showsUserLocation
         self.showsScale = showsScale
     }
     
-    func makeUIView(context: UIViewRepresentableContext<MKMapViewWrapper>) -> MKMapView {
+    public func makeUIView(context: UIViewRepresentableContext<MKMapViewWrapper>) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
         mapView.showsUserLocation = showsUserLocation
@@ -51,7 +51,7 @@ struct MKMapViewWrapper : UIViewRepresentable{
         return mapView
     }
     
-    func updateUIView(_ uiView: UIViewType, context: Context) {
+    public func updateUIView(_ uiView: UIViewType, context: Context) {
         updateMapRegion(mapView: uiView, region: region)
     }
     
@@ -59,63 +59,19 @@ struct MKMapViewWrapper : UIViewRepresentable{
         mapView.setRegion(region, animated: true)
     }
     
-    func makeCoordinator() -> Coordinator {
+    public func makeCoordinator() -> Coordinator {
         Coordinator(mkMapWrapper: self)
     }
     
-    func onAnnotationDidSelect(_ action: @escaping (MKAnnotation?) -> Void) -> MKMapViewWrapper {
+    public func onAnnotationDidSelect(_ action: @escaping (MKAnnotation?) -> Void) -> MKMapViewWrapper {
         var newMapWrapper = self
         newMapWrapper.onAnnotationDidSelectAction = action
         return newMapWrapper
     }
     
-    func onAnnotationDidDeselect(_ action: @escaping (MKAnnotation?) -> Void) -> MKMapViewWrapper {
+    public func onAnnotationDidDeselect(_ action: @escaping (MKAnnotation?) -> Void) -> MKMapViewWrapper {
         var newMapWrapper = self
         newMapWrapper.onAnnotationDidDeselectAction = action
         return newMapWrapper
-    }
-    
-    final class Coordinator: NSObject, MKMapViewDelegate{
-        var mkMapWrapper: MKMapViewWrapper
-        
-        init(mkMapWrapper: MKMapViewWrapper) {
-            self.mkMapWrapper = mkMapWrapper
-        }
-        
-        func didSelect(annotation: MKAnnotation?){
-            guard let action = mkMapWrapper.onAnnotationDidSelectAction else { return }
-            guard let annotationValue = annotation else { return }
-            action(annotationValue)
-        }
-        
-        func didDeselect(annotation: MKAnnotation?){
-            guard let action = mkMapWrapper.onAnnotationDidDeselectAction else { return }
-            guard let annotationValue = annotation else { return }
-            action(annotationValue)
-        }
-        
-        //TODO
-        //для касмомных аннотаций на карте
-        //        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
-        //
-        //        }
-        
-        func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-            didSelect(annotation: view.annotation)
-        }
-        
-        func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
-            didDeselect(annotation: view.annotation)
-        }
-        
-        @available(iOS 16, *)
-        func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
-            didSelect(annotation: annotation)
-        }
-        
-        @available(iOS 16, *)
-        func mapView(_ mapView: MKMapView, didDeselect annotation: MKAnnotation) {
-            didDeselect(annotation: annotation)
-        }
     }
 }
