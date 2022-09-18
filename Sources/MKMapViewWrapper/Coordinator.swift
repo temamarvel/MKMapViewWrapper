@@ -26,8 +26,7 @@ public final class Coordinator: NSObject, MKMapViewDelegate{
         action(annotationValue)
     }
     
-    //TODO
-    //для касмомных аннотаций на карте
+    //TODO CustomAnnotation
     //        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
     //
     //        }
